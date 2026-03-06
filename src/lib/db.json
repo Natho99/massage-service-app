@@ -1,0 +1,74 @@
+{
+  "admins": [
+    {
+      "email": "admin@massage.com",
+      "password": "123"
+    }
+  ],
+  "users": [
+    {
+      "email": "test@example.com",
+      "password": "123",
+      "points": 215
+    }
+  ],
+  "therapists": [
+    {
+      "id": 1,
+      "name": "flourishing",
+      "sales": 270,
+      "price": 199,
+      "old_price": 230,
+      "avatar_emoji": "🌸",
+      "type": "instant"
+    },
+    {
+      "id": 2,
+      "name": "Left Girl",
+      "sales": 257,
+      "price": 220,
+      "old_price": 250,
+      "avatar_emoji": "👩‍⚕️",
+      "type": "preorder"
+    },
+    {
+      "id": 3,
+      "name": "Rose",
+      "sales": 254,
+      "price": 299,
+      "old_price": 350,
+      "avatar_emoji": "🌹",
+      "type": "instant"
+    },
+    {
+      "id": 1772811558036,
+      "name": "s",
+      "sales": 0,
+      "price": null,
+      "old_price": 50,
+      "avatar_emoji": "👤",
+      "type": "instant"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_001",
+      "user_email": "test@example.com",
+      "therapist_name": "flourishing",
+      "img": "🌸",
+      "price": 199,
+      "status": "complete",
+      "date": "2026-03-01"
+    },
+    {
+      "id": "ord_1772781436934",
+      "user_email": "test@example.com",
+      "therapist_name": "Left Girl",
+      "img": "👩‍⚕️",
+      "price": 220,
+      "status": "complete",
+      "appointment_time": "2026-03-20 13:00",
+      "date": "2026-03-06"
+    }
+  ]
+}
