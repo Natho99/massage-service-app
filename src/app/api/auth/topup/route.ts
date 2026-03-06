@@ -1,20 +1,49 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const dbPath = path.join(process.cwd(), 'src/lib/db.json');
+import { getStore } from '@netlify/blobs';
 
 export async function POST(request: Request) {
-  const { email, amount } = await request.json();
-  const fileData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-  
-  const userIndex = fileData.users.findIndex((u: any) => u.email === email);
+  try {
+    const { email, amount } = await request.json();
 
-  if (userIndex !== -1) {
-    fileData.users[userIndex].points += amount;
-    fs.writeFileSync(dbPath, JSON.stringify(fileData, null, 2));
-    return NextResponse.json({ success: true, points: fileData.users[userIndex].points });
+    // 1. Connect to the Netlify Blob Store
+    const store = getStore('site-data');
+    
+    // 2. Fetch the JSON data from the cloud
+    let fileData: any = await store.get('db', { type: 'json' });
+
+    if (!fileData) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Database not initialized" 
+      }, { status: 500 });
+    }
+
+    // 3. Find the user by email
+    const userIndex = fileData.users.findIndex((u: any) => u.email === email);
+
+    if (userIndex !== -1) {
+      // 4. Update the points in the cloud object
+      fileData.users[userIndex].points += Number(amount);
+
+      // 5. SAVE BACK TO CLOUD (Replaces fs.writeFileSync)
+      await store.setJSON('db', fileData);
+
+      return NextResponse.json({ 
+        success: true, 
+        points: fileData.users[userIndex].points 
+      });
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: "User not found" 
+    }, { status: 404 });
+
+  } catch (error) {
+    console.error("Top-up API Error:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Cloud Sync Failed" 
+    }, { status: 500 });
   }
-  
-  return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 }

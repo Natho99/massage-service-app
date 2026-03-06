@@ -1,17 +1,24 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const dbPath = path.join(process.cwd(), 'src/lib/db.json');
+import { getStore } from '@netlify/blobs';
 
 export async function POST(request: Request) {
   try {
     const { email, therapist, appointment } = await request.json();
     
-    // Read current database
-    const fileData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    // 1. Connect to the Netlify Blob Store
+    const store = getStore('site-data');
     
-    // 1. Find User and check balance
+    // 2. Fetch the JSON data from the cloud
+    let fileData: any = await store.get('db', { type: 'json' });
+
+    if (!fileData) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Database not initialized in cloud" 
+      }, { status: 500 });
+    }
+    
+    // 3. Find User and check balance
     const userIndex = fileData.users.findIndex((u: any) => u.email === email);
     if (userIndex === -1) {
       return NextResponse.json({ success: false, message: "用户不存在" }, { status: 404 });
@@ -22,10 +29,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "点数不足，请充值" }, { status: 400 });
     }
 
-    // 2. Perform Transaction: Deduct points
+    // 4. Perform Transaction: Deduct points from the cloud object
     fileData.users[userIndex].points -= therapist.price;
 
-    // 3. Create New Order Entry
+    // 5. Create New Order Entry
     const newOrder = {
       id: `ord_${Date.now()}`,
       user_email: email,
@@ -37,9 +44,9 @@ export async function POST(request: Request) {
       date: new Date().toISOString().split('T')[0]
     };
 
-    // 4. Save to JSON
+    // 6. Save to Cloud (Replaces fs.writeFileSync)
     fileData.orders.push(newOrder);
-    fs.writeFileSync(dbPath, JSON.stringify(fileData, null, 2));
+    await store.setJSON('db', fileData);
 
     return NextResponse.json({ 
       success: true, 
@@ -48,6 +55,9 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Order creation error:", error);
-    return NextResponse.json({ success: false, message: "服务器内部错误" }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      message: "服务器内部错误 (Cloud Sync Failed)" 
+    }, { status: 500 });
   }
 }
