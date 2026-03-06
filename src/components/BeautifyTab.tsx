@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ResultModal from './ResultModal';
 
 const TOOLS = [
@@ -16,23 +17,35 @@ const TOOLS = [
 ];
 
 export default function BeautifyTab() {
+  const router = useRouter();
   const [processing, setProcessing] = useState(false);
   const [activeTool, setActiveTool] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Sync points with local storage
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const savedUser = localStorage.getItem('user');
+    
+    if (!savedUser) {
+      router.push('/login');
+      return;
+    }
+
+    const user = JSON.parse(savedUser);
     setUserPoints(user.points || 0);
-  }, [processing]);
+    setCheckingAuth(false);
+  }, [processing, router]);
 
   const handleToolClick = async (tool: any) => {
     const savedUser = localStorage.getItem('user');
-    if (!savedUser) return alert("请先登录以使用创作工具");
+    if (!savedUser) return router.push('/login');
     
     const user = JSON.parse(savedUser);
-    if (user.points < tool.cost) return alert("余额不足，请先充值");
+    
+    if (user.points < tool.cost) {
+      return alert(`余额不足！该功能需要 ${tool.cost} 点数`);
+    }
 
     if (!confirm(`确认消耗 ${tool.cost} 点数使用 ${tool.title}?`)) return;
 
@@ -43,38 +56,49 @@ export default function BeautifyTab() {
       const res = await fetch('/api/beautify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, toolTitle: tool.title, cost: tool.cost })
+        body: JSON.stringify({ 
+          email: user.email, 
+          toolTitle: tool.title, 
+          cost: tool.cost 
+        })
       });
+      
       const data = await res.json();
 
       if (data.success) {
-        // Update local storage and state balance
         const updatedUser = { ...user, points: data.newPoints };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setUserPoints(data.newPoints);
         
-        // Simulate Generation Delay (2 seconds)
         setTimeout(() => {
           setProcessing(false);
           setShowResult(true);
         }, 2000);
       } else {
-        alert(data.message);
+        alert(data.message || "生成失败");
         setProcessing(false);
       }
     } catch (err) {
       setProcessing(false);
-      alert("生成请求失败");
+      alert("网络连接错误");
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-[#25D366] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="animate-in fade-in duration-500 pb-20 overflow-x-hidden">
+    <div className="animate-in fade-in duration-500 pb-20 overflow-x-hidden relative min-h-screen">
       <header className="p-8 pt-12 bg-white rounded-b-[40px] shadow-sm mb-6 sticky top-0 z-20">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-extrabold italic tracking-tighter">创作工具</h1>
-            <p className="text-gray-400 text-sm mt-1 font-medium italic">不仅好用，更是设计</p>
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Design Mastery</p>
           </div>
           <div className="bg-[#1C1C1E] text-[#FFD600] px-4 py-2 rounded-2xl text-[10px] font-black italic shadow-lg flex flex-col items-center">
             <span className="opacity-50 text-[7px] uppercase tracking-tighter mb-0.5">My Points</span>
@@ -99,32 +123,24 @@ export default function BeautifyTab() {
             <div className="aspect-square rounded-2xl bg-[#F8FAFB] mb-3 overflow-hidden shadow-inner flex items-center justify-center relative">
               <img src={tool.img} alt={tool.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               
-              {/* Progress Loading Overlay */}
               {processing && activeTool?.title === tool.title && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
                   <div className="w-6 h-6 border-2 border-[#25D366] border-t-transparent rounded-full animate-spin" />
-                  <span className="text-white text-[8px] font-bold tracking-widest uppercase animate-pulse">Processing</span>
+                  <span className="text-white text-[8px] font-bold tracking-widest uppercase">Processing</span>
                 </div>
               )}
             </div>
 
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-[14px] tracking-tight">{tool.title}</h3>
-              {tool.cost > 0 && (
-                <span className="text-[10px] font-black italic text-[#25D366]">P:{tool.cost}</span>
-              )}
+              {tool.cost > 0 && <span className="text-[10px] font-black italic text-[#25D366]">P:{tool.cost}</span>}
             </div>
             <p className="text-[10px] text-gray-400 mt-0.5 truncate font-medium">{tool.desc}</p>
           </div>
         ))}
       </div>
 
-      {showResult && (
-        <ResultModal 
-          tool={activeTool} 
-          onClose={() => setShowResult(false)} 
-        />
-      )}
+      {showResult && <ResultModal tool={activeTool} onClose={() => setShowResult(false)} />}
     </div>
   );
 }

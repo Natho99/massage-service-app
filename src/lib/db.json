@@ -9,7 +9,7 @@
     {
       "email": "test@example.com",
       "password": "123",
-      "points": 215
+      "points": 345
     }
   ],
   "therapists": [
@@ -42,10 +42,10 @@
     },
     {
       "id": 1772811558036,
-      "name": "s",
-      "sales": 0,
-      "price": null,
-      "old_price": 50,
+      "name": "Staff S",
+      "sales": 12,
+      "price": 150,
+      "old_price": 200,
       "avatar_emoji": "👤",
       "type": "instant"
     }
@@ -61,6 +61,15 @@
       "date": "2026-03-01"
     },
     {
+      "id": "tool_101",
+      "user_email": "test@example.com",
+      "therapist_name": "AI 二维码生成",
+      "img": "✨",
+      "price": 50,
+      "status": "complete",
+      "date": "2026-03-02"
+    },
+    {
       "id": "ord_1772781436934",
       "user_email": "test@example.com",
       "therapist_name": "Left Girl",
@@ -68,6 +77,25 @@
       "price": 220,
       "status": "complete",
       "appointment_time": "2026-03-20 13:00",
+      "date": "2026-03-06"
+    },
+    {
+      "id": "tool_102",
+      "user_email": "test@example.com",
+      "therapist_name": "网红模板美化",
+      "img": "📱",
+      "price": 10,
+      "status": "complete",
+      "date": "2026-03-06"
+    },
+    {
+      "id": "ord_1772819194100",
+      "user_email": "test@example.com",
+      "therapist_name": "Staff S",
+      "img": "👤",
+      "price": 150,
+      "status": "complete",
+      "appointment_time": "Instant",
       "date": "2026-03-06"
     }
   ]
